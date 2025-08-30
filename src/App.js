@@ -1,24 +1,57 @@
-import React, { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
-import Login from "./Login";
-import Product from "./Product";
+// src/App.js
+import React, { useState } from "react";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import ProductManagement from "./components/ProductManagement";
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState("login");
+  const [users, setUsers] = useState([{ email: "user@test.com", password: "1234" }]); // default user
+  const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const handleLogin = (email, password) => {
+    const found = users.find((u) => u.email === email && u.password === password);
+    if (found) {
+      setCurrentUser(found);
+      setPage("products");
+    } else {
+      alert("Invalid credentials. Try again.");
+    }
+  };
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  const handleSignup = (email, password) => {
+    setUsers([...users, { email, password }]);
+    alert("Account created successfully! Please login.");
+    setPage("login");
+  };
 
-  return <div>{!user ? <Login /> : <Product />}</div>;
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setPage("login");
+  };
+
+  return (
+    <>
+      {page === "login" && (
+        <Login
+          onLogin={handleLogin}
+          goToSignup={() => setPage("signup")}
+        />
+      )}
+      {page === "signup" && (
+        <Signup
+          onSignup={handleSignup}
+          goToLogin={() => setPage("login")}
+        />
+      )}
+      {page === "products" && (
+        <ProductManagement
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
+      )}
+    </>
+  );
 }
 
 export default App;
